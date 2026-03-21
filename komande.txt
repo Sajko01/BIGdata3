@@ -1,0 +1,44 @@
+docker exec -it namenode3 /bin/bash
+
+docker exec -it spark-master3 pip install numpy
+docker exec -it spark-worker3 pip install numpy
+
+docker exec -it spark-master3 /opt/spark/bin/spark-submit /app/inference_app.py
+
+
+# Kopiraj trening skriptu
+docker cp D:\02BIGDATA\train_model.py spark-master3:/opt/spark/work-dir/
+
+# Kopiraj inference skriptu
+docker cp D:\02BIGDATA\inference_app.py spark-master3:/opt/spark/work-dir/
+
+# Kopiraj CSV podatke (ako već nisu tamo)
+docker cp D:\02BIGDATA\college_big.csv spark-master3:/opt/spark/work-dir/
+
+docker exec -it spark-master3 /opt/spark/bin/spark-submit --master spark://spark-master3:7077 --driver-memory 4g --executor-memory 4g /opt/spark/work-dir/train_model.py
+
+docker exec -it spark-master3 /opt/spark/bin/spark-submit --master spark://spark-master3:7077 --driver-memory 4g --executor-memory 4g /opt/spark/work-dir/inference_app.py
+
+docker exec -it spark-master3 /opt/spark/bin/spark-submit --master spark://spark-master3:7077 --driver-memory 1g --executor-memory 1g /opt/spark/work-dir/train_model.py
+
+docker exec -it spark-master3 /opt/spark/bin/spark-submit --master spark://spark-master3:7077 --driver-memory 1g --executor-memory 1g /opt/spark/work-dir/inference_app.py
+
+hdfs dfs -chown -R spark:supergroup /user/spark
+
+hdfs dfs -chmod -R 777 /user/spark
+
+pip install pandas matplotlib seaborn scikit-learn pyarrow fastparquet
+
+
+docker exec -it namenode3 hdfs dfs -get /user/spark/results/rf_predictions /tmp/rf_results
+docker exec -it namenode3 hdfs dfs -get /user/spark/results/gbt_predictions /tmp/gbt_results
+
+docker cp namenode3:/tmp/rf_results D:/02BIGDATA/results/rf_predictions
+docker cp namenode3:/tmp/gbt_results D:/02BIGDATA/results/gbt_predictions
+
+
+docker cp D:\02BIGDATA\experiments_cluster.py spark-master3:/opt/spark/work-dir/
+
+docker exec -it spark-master3 /opt/spark/bin/spark-submit --master spark://spark-master3:7077 --driver-memory 2g --executor-memory 2g /opt/spark/work-dir/experiments_cluster.py
+
+docker cp spark-master3:/opt/spark/work-dir/experiment_results_cluster.csv D:\02BIGDATA\results\

@@ -1,0 +1,72 @@
+
+version: '3'
+services:
+  # namenode3:
+  #   image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
+  #   container_name: namenode3
+  #   ports:
+  #     - "9870:9870"   # HDFS UI
+  #     - "9000:9000"   # HDFS NameNode port
+  #   environment:
+  #     - CLUSTER_NAME=local
+  #   volumes:
+  #     - hdfs_namenode3:/hadoop/dfs/name
+
+  # datanode3:
+  #   image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+  #   container_name: datanode3
+  #   ports:
+  #     - "9864:9864"   # DataNode UI
+  #   environment:
+  #     - NAMENODE_URI=hdfs://namenode3:9000   # POVEZANO NA NOVI NAMENODE
+  #   volumes:
+  #     - hdfs_datanode3:/hadoop/dfs/data
+
+   namenode3:
+    image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
+    container_name: namenode3
+    ports:
+      - "9870:9870"
+      - "9000:9000"
+    environment:
+      - CLUSTER_NAME=local
+      - CORE_CONF_fs_defaultFS=hdfs://namenode3:9000
+    volumes:
+      - hdfs_namenode3:/hadoop/dfs/name
+
+   datanode3:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    container_name: datanode3
+    depends_on:
+      - namenode3
+    environment:
+      - SERVICE_PRECONDITION=namenode3:9870
+      - CORE_CONF_fs_defaultFS=hdfs://namenode3:9000
+    volumes:
+      - hdfs_datanode3:/hadoop/dfs/data
+   spark-master3:
+    image: apache/spark:3.5.3
+    container_name: spark-master3
+    environment:
+      - SPARK_MODE=master
+      - SPARK_MASTER_HOST=spark-master3
+    ports:
+      - "8080:8080"  # Spark Master UI
+      - "7077:7077"  # Spark Master port
+    command: ["/bin/bash", "-c", "/opt/spark/bin/spark-class org.apache.spark.deploy.master.Master"]
+
+   spark-worker3:
+    image: apache/spark:3.5.3
+    container_name: spark-worker3
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master3:7077   # povezao na novi master
+    depends_on:
+      - spark-master3
+    ports:
+      - "8081:8081"  # Spark Worker UI
+    command: ["/bin/bash", "-c", "/opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master3:7077"]
+
+volumes:
+  hdfs_namenode3:
+  hdfs_datanode3:
