@@ -1,0 +1,42 @@
+docker cp train_model.py spark-master3:/opt/spark/work-dir/
+
+docker exec -u 0 -it spark-master3 pip install numpy pandas
+
+docker exec -u 0 -it spark-worker3 pip install numpy pandas
+
+docker exec -u 0 -it spark-worker4 pip install numpy pandas
+
+docker cp extract_importance.py spark-master3:/opt/spark/work-dir/
+
+docker exec -it spark-master3 /opt/spark/bin/spark-submit --master spark://spark-master3:7077 --driver-memory 512m --executor-memory 512m /opt/spark/work-dir/extract_importance.py
+docker exec -it namenode3 hadoop fs -get /user/spark/results/final_inference/importance_rf /tmp/
+docker exec -it namenode3 hadoop fs -get /user/spark/results/final_inference/importance_gbt /tmp/
+docker cp namenode3:/tmp/importance_rf D:\02BIGDATA\results\final_results\
+docker cp namenode3:/tmp/importance_gbt D:\02BIGDATA\results\final_results\
+AKO NE ide. PRVo OVO
+ONDA
+
+docker exec -it spark-master3 /opt/spark/bin/spark-submit --master spark://spark-master3:7077 --driver-memory 1g --executor-memory 1g /opt/spark/work-dir/train_model.py
+
+
+docker cp inference_app.py spark-master3:/opt/spark/work-dir/
+
+docker exec -it spark-master3 /opt/spark/bin/spark-submit --master spark://spark-master3:7077 --driver-memory 1g --executor-memory 1g /opt/spark/work-dir/inference_app.py
+
+
+docker exec -it namenode3 hdfs dfs -get /user/spark/results/final_inference /tmp/final_results
+
+docker cp namenode3:/tmp/final_results D:/02BIGDATA/results
+
+
+python visualization_final_inference.py
+
+
+python .\experiments.py
+
+docker cp D:\02BIGDATA\experiments_cluster.py spark-master3:/opt/spark/work-dir/
+
+docker exec -it spark-master3 /opt/spark/bin/spark-submit --master spark://spark-master3:7077 --driver-memory 1g --executor-memory 1g /opt/spark/work-dir/experiments_cluster.py
+
+
+docker cp spark-master3:/opt/spark/work-dir/experiment_results_cluster.csv D:\02BIGDATA\results\

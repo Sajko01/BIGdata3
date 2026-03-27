@@ -67,6 +67,18 @@ services:
       - "8081:8081"  # Spark Worker UI
     command: ["/bin/bash", "-c", "/opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master3:7077"]
 
+  #  spark-worker4:
+  #   image: apache/spark:3.5.3
+  #   container_name: spark-worker4
+  #   environment:
+  #     - SPARK_MODE=worker
+  #     - SPARK_MASTER_URL=spark://spark-master3:7077   # povezao na novi master
+  #   depends_on:
+  #     - spark-master3
+  #   ports:
+  #     - "8082:8081"  # Spark Worker UI
+  #   command: ["/bin/bash", "-c", "/opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master3:7077"]
+
 volumes:
   hdfs_namenode3:
   hdfs_datanode3:

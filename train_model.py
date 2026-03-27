@@ -62,15 +62,15 @@ scaler = StandardScaler(
 rf = RandomForestClassifier(
     featuresCol="scaledFeatures",
     labelCol="label",
-    numTrees=50,
-    maxDepth=5
+    numTrees=50,#50
+    maxDepth=6#6
 )
 
 gbt = GBTClassifier(
     featuresCol="scaledFeatures",
     labelCol="label",
-    maxIter=20,
-    maxDepth=5
+    maxIter=25,#25
+    maxDepth=6#6
 )
 
 # ==============================
@@ -114,4 +114,29 @@ gbt_model.write().overwrite().save("hdfs://namenode3:9000/user/spark/models/gbt_
 
 print("=== PIPELINE MODELI USPESNO SACUVANI NA HDFS ===")
 
+
+
+# ==============================
+# 9. DINAMIČKA EKSTRAKCIJA FEATURE IMPORTANCE
+# ==============================
+print("\n=== EKSTRAKCIJA ZNAČAJNOSTI OBELEŽJA ===")
+
+def save_importance(model_pipeline, model_name):
+    # Uzimamo poslednji stage (klasifikator)
+    trained_classifier = model_pipeline.stages[-1]
+    importances = trained_classifier.featureImportances.toArray()
+    
+    # Mapiramo nazive i vrednosti
+    fi_data = [(feature_cols[i], float(importances[i])) for i in range(len(feature_cols))]
+    fi_df = spark.createDataFrame(fi_data, ["Feature", "Importance"])
+    
+    # Čuvamo kao CSV (coalesce(1) pravi jedan fajl)
+    path = f"hdfs://namenode3:9000/user/spark/results/final_inference/importance_{model_name}"
+    fi_df.coalesce(1).write.mode("overwrite").option("header", "true").csv(path)
+    print(f"✅ Sačuvana važnost za {model_name}")
+
+save_importance(rf_model, "rf")
+save_importance(gbt_model, "gbt")
+
+print("\n=== SVE OPERACIJE ZAVRŠENE ===")
 spark.stop()

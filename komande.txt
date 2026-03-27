@@ -39,6 +39,6 @@ docker cp namenode3:/tmp/gbt_results D:/02BIGDATA/results/gbt_predictions
 
 docker cp D:\02BIGDATA\experiments_cluster.py spark-master3:/opt/spark/work-dir/
 
-docker exec -it spark-master3 /opt/spark/bin/spark-submit --master spark://spark-master3:7077 --driver-memory 2g --executor-memory 2g /opt/spark/work-dir/experiments_cluster.py
+docker exec -it spark-master3 /opt/spark/bin/spark-submit --master spark://spark-master3:7077 --driver-memory 1g --executor-memory 1g /opt/spark/work-dir/experiments_cluster.py
 
 docker cp spark-master3:/opt/spark/work-dir/experiment_results_cluster.csv D:\02BIGDATA\results\
